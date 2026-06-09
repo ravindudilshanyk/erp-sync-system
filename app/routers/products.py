@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from app.database import get_db
-from app.models.models import Product
+from app.models.models import Product, StockItem, Supplier
 from app.schemas.schemas import ProductResponse
 
 router = APIRouter()
@@ -21,7 +21,7 @@ def get_products(
     db: Session = Depends(get_db)
 ):
     query = db.query(Product).options(
-        joinedload(Product.stock_item).joinedload("supplier")
+        joinedload(Product.stock_item).joinedload(StockItem.supplier)
     )
 
     if search:
@@ -41,7 +41,7 @@ def get_products(
 )
 def get_product(product_id: int, db: Session = Depends(get_db)):
     product = db.query(Product).options(
-        joinedload(Product.stock_item).joinedload("supplier")
+        joinedload(Product.stock_item).joinedload(StockItem.supplier)
     ).filter(Product.id == product_id).first()
 
     if not product:
@@ -60,7 +60,9 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     description="Find a product using its ERP system identifier."
 )
 def get_product_by_erp_id(erp_id: str, db: Session = Depends(get_db)):
-    product = db.query(Product).filter(Product.erp_id == erp_id).first()
+    product = db.query(Product).options(
+        joinedload(Product.stock_item).joinedload(StockItem.supplier)
+    ).filter(Product.erp_id == erp_id).first()
 
     if not product:
         raise HTTPException(

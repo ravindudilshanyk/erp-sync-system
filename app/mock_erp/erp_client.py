@@ -1,17 +1,43 @@
-"""
-Mock ERP Client
---------------
-Simulates the external ERP system API.
-In a real project this would make HTTP calls to the ERP system.
-For this assessment we return realistic mock data.
-"""
+# MOCK ERP CLIENT
+# 
+# This file currently uses hardcoded mock data to simulate
+# the external ERP system API.
+#
+# TO CONNECT TO A REAL ERP SYSTEM:
+# 1. Fill in your .env file with real values:
+#    ERP_BASE_URL=https://external-erp-system.com/api
+#    ERP_API_KEY=external_actual_api_key
+#
+# 2. Install httpx:
+#    pip install httpx
+#
+# 3. Comment out or delete the MOCK DATA section below
+#
+# 4. Uncomment the REAL ERP section at the bottom of this file
+#
+# Everything else in the project stays exactly the same.
+# Only this file needs to change.
+# ─────────────────────────────────────────────────────────────
 
-from typing import List, Dict, Optional
+import os
+from dotenv import load_dotenv
+from typing import List, Dict
+
+load_dotenv()
+
+# ─── Real ERP Config (fill .env to use) ──────────────────────
+# ERP_BASE_URL = os.getenv("ERP_BASE_URL")
+# ERP_API_KEY  = os.getenv("ERP_API_KEY")
+# HEADERS = {
+#     "Authorization": f"Bearer {ERP_API_KEY}",
+#     "Content-Type": "application/json"
+# }
 
 
-# ─── Mock ERP Data ────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────
+# MOCK DATA — Delete or comment this section when using real ERP
+# ─────────────────────────────────────────────────────────────
 
-# Simulated ERP product master records
 MOCK_ERP_PRODUCTS = [
     {
         "erp_id": "ERP-PROD-001",
@@ -71,9 +97,8 @@ MOCK_ERP_PRODUCTS = [
     },
 ]
 
-# Simulated ERP supplier pricing records
 MOCK_ERP_PRICING = {
-    "ERP-PROD-001": {"price": 89.99,  "pricing_revision": 1},
+    "ERP-PROD-001": {"price": 89.99, "pricing_revision": 1},
     "ERP-PROD-002": {"price": 12.99,  "pricing_revision": 2},
     "ERP-PROD-003": {"price": 149.99, "pricing_revision": 3},
     "ERP-PROD-004": {"price": 599.99, "pricing_revision": 4},
@@ -83,7 +108,6 @@ MOCK_ERP_PRICING = {
     "ERP-PROD-008": {"price": 29.99,  "pricing_revision": 8},
 }
 
-# Simulated ERP supplier master records
 MOCK_ERP_SUPPLIERS = [
     {"erp_id": "ERP-SUP-001", "name": "TechSupply Co"},
     {"erp_id": "ERP-SUP-002", "name": "GlobalTech Distributors"},
@@ -92,72 +116,41 @@ MOCK_ERP_SUPPLIERS = [
 ]
 
 
-# ─── ERP Client Functions ─────────────────────────────────────
+# ─────────────────────────────────────────────────────────────
+# MOCK FUNCTIONS — Replace with Real ERP functions below
+# ─────────────────────────────────────────────────────────────
 
 def fetch_erp_products(since_revision: int = 0) -> List[Dict]:
-    """
-    Fetch product master records from ERP.
-    since_revision=0 means full sync (all products).
-    since_revision>0 means delta sync (only changed products).
-    """
-    return [
-        product for product in MOCK_ERP_PRODUCTS
-        if product["revision"] > since_revision
-    ]
+    # MOCK version — returns hardcoded data
+    return [p for p in MOCK_ERP_PRODUCTS if p["revision"] > since_revision]
 
 
-def fetch_erp_pricing_bulk(erp_product_ids: List[str]) -> Dict[str, Dict]:
-    """
-    Fetch supplier pricing for multiple products at once.
-    Returns a dict keyed by erp_product_id for fast lookup.
-    Bulk retrieval is a performance optimization — one call instead of N calls.
-    """
-    return {
-        erp_id: MOCK_ERP_PRICING[erp_id]
-        for erp_id in erp_product_ids
-        if erp_id in MOCK_ERP_PRICING
-    }
+def fetch_erp_pricing_bulk(erp_product_ids: List[str]) -> Dict:
+    # MOCK version — returns hardcoded pricing
+    return {eid: MOCK_ERP_PRICING[eid] for eid in erp_product_ids if eid in MOCK_ERP_PRICING}
 
 
 def fetch_erp_suppliers() -> List[Dict]:
-    """
-    Fetch all supplier records from ERP.
-    Used during full sync to ensure all suppliers exist internally.
-    """
+    # MOCK version — returns hardcoded suppliers
     return MOCK_ERP_SUPPLIERS
 
 
 def get_max_pricing_revision(erp_product_ids: List[str]) -> int:
-    """
-    Get the highest pricing revision from the fetched products.
-    Used to update the sync state watermark.
-    """
     if not erp_product_ids:
         return 0
-    revisions = [
-        MOCK_ERP_PRICING[eid]["pricing_revision"]
-        for eid in erp_product_ids
-        if eid in MOCK_ERP_PRICING
-    ]
+    revisions = [MOCK_ERP_PRICING[eid]["pricing_revision"] for eid in erp_product_ids if eid in MOCK_ERP_PRICING]
     return max(revisions) if revisions else 0
 
 
+# ─────────────────────────────────────────────────────────────
+# REAL ERP FUNCTIONS — Uncomment these when connecting to real ERP
+# Make sure to: pip install httpx
+# Fill .env with ERP_BASE_URL and ERP_API_KEY
+# ─────────────────────────────────────────────────────────────
+
 # import httpx
-# import os
-# from dotenv import load_dotenv
 
-# load_dotenv()
-
-# ERP_BASE_URL = os.getenv("ERP_BASE_URL")
-# ERP_API_KEY  = os.getenv("ERP_API_KEY")
-
-# HEADERS = {
-#     "Authorization": f"Bearer {ERP_API_KEY}",
-#     "Content-Type": "application/json"
-# }
-
-
-# def fetch_erp_products(since_revision: int = 0):
+# def fetch_erp_products(since_revision: int = 0) -> List[Dict]:
 #     response = httpx.get(
 #         f"{ERP_BASE_URL}/products",
 #         headers=HEADERS,
@@ -167,7 +160,7 @@ def get_max_pricing_revision(erp_product_ids: List[str]) -> int:
 #     return response.json()
 
 
-# def fetch_erp_pricing_bulk(erp_product_ids: list):
+# def fetch_erp_pricing_bulk(erp_product_ids: List[str]) -> Dict:
 #     response = httpx.post(
 #         f"{ERP_BASE_URL}/pricing/bulk",
 #         headers=HEADERS,
@@ -177,16 +170,10 @@ def get_max_pricing_revision(erp_product_ids: List[str]) -> int:
 #     return response.json()
 
 
-# def fetch_erp_suppliers():
+# def fetch_erp_suppliers() -> List[Dict]:
 #     response = httpx.get(
 #         f"{ERP_BASE_URL}/suppliers",
 #         headers=HEADERS
 #     )
 #     response.raise_for_status()
 #     return response.json()
-
-
-# def get_max_pricing_revision(erp_product_ids: list):
-#     pricing = fetch_erp_pricing_bulk(erp_product_ids)
-#     revisions = [p["pricing_revision"] for p in pricing.values() if "pricing_revision" in p]
-#     return max(revisions) if revisions else 0

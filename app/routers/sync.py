@@ -10,7 +10,6 @@ from app.services.sync_service import (
 
 router = APIRouter()
 
-
 @router.post(
     "/full",
     response_model=SyncResult,

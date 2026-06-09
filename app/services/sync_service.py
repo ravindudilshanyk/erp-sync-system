@@ -133,15 +133,23 @@ def _run_sync(db: Session, full: bool) -> dict:
 
         if not erp_products:
             logger.info("No new products to sync — already up to date")
+
+            # Count existing products as skipped for accurate reporting
+            total_existing = db.query(Product).count()
+
             state.status = "success"
+            state.total_created = 0
+            state.total_updated = 0
+            state.total_skipped = total_existing
             state.last_synced_at = datetime.now(timezone.utc)
             db.commit()
+
             return {
-                "message": "Already up to date",
+                "message": "Already up to date — all records unchanged",
                 "sync_type": sync_type,
                 "total_created": 0,
                 "total_updated": 0,
-                "total_skipped": 0,
+                "total_skipped": total_existing,
                 "errors": 0,
                 "last_product_revision": state.last_product_revision,
                 "last_pricing_revision": state.last_pricing_revision,
@@ -277,6 +285,7 @@ def _run_sync(db: Session, full: bool) -> dict:
         )
         state.last_synced_at = datetime.now(timezone.utc)
         db.commit()
+        db.refresh(state)
 
         duration = round(time.time() - start_time, 2)
 
